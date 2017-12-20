@@ -1,0 +1,123 @@
+{% extends "base_beta.html" %}
+
+
+
+
+{% block content %}
+  <script src="https://js.braintreegateway.com/web/dropin/1.6.0/js/dropin.min.js"></script>
+
+<div class="container">
+
+  <div id="dropin-container" class = "col-md-12" style = "padding-left:0"> </div>
+  {% csrf_token %}
+  <div>
+      SubID
+      {{sub_id}}
+      {% if sub_id == "monthlyid" %}
+      <div>
+          You are going to subscribe to our monthly plan/
+      </div>
+      <div style="display:none" id="payment">$Monthly</div>
+      {% elif sub_id == "yearlyid" %}
+      <div>
+          You are going to subscribe to our yearly plan.
+          <div style="display:none" id="payment">$Yearly</div>
+      </div>
+      {% elif sub_id == "databaseid" %}
+      <div>
+          You are going to subscribe to our database plan
+          <div style="display:none" id="payment">$Database</div>
+      </div>
+      {% endif %}
+  </div>
+      <label for="name">Name on Card</label>
+      <input type="text" class = "form-control" id = "name">
+      <label for="address1">Address line 1</label>
+      <input type="text" class = "form-control" id = "address1">
+
+      <label for="address2">Address line 2</label>
+      <input type="text" class = "form-control" id="address2">
+
+      <label for="city">City</label>
+      <input type="text" class = "form-control" id = "city">
+
+      <label for="state" class="">State</label>
+      <input type="text" class = "form-control" id="state">
+
+      <label for="zipcode">Zip</label>
+      <input type="text" class = "form-control" id="zipcode">
+
+  <button id="submit-button" class = "btn btn-primary">Request payment method</button>
+
+</div>
+  <script>
+    var button = document.querySelector('#submit-button');
+
+    braintree.dropin.create({
+      authorization: '{{request.session.braintree_client_token}}',
+      container: '#dropin-container'
+    }, function (createErr, instance) {
+      button.addEventListener('click', function () {
+        instance.requestPaymentMethod(function (err, payload) {
+          // Submit payload.nonce to your server
+          var typeofsubscription = $("#payment").text();
+          var name = $("input[id='name']").val();
+          var address1 = $("input[id='address1']").val();
+          var address2 = $("input[id='address2']").val();
+          var city = $("input[id='city']").val();
+          var state = $("input[id='state']").val();
+          var zip = $("input[id='zipcode']").val();
+
+          var amount = 0;
+          if (typeofsubscription == "$10") {
+            amount = 10;
+          } else {
+            amount = 5;
+          }
+          console.log(typeofsubscription);
+          console.log(name);
+          var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+          $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+          });
+          $.ajax({
+
+            method: "POST",
+            data: {
+                nonce:payload.nonce,
+                name: name,
+                city: city,
+                address1: address1,
+                address2: address2,
+                state: state,
+                zip: zip,
+                amount: amount
+            }
+          }).done(function(data) {
+            console.log("Request made successfully");
+            if (data.result) {
+                if (data.coverage)
+                    window.location.replace("");
+                else if (data.profile)
+                    window.location.replace("{% url 'beta:portfolio' %}");
+            } else {
+                alert(data.error);
+            }
+
+          });
+
+        });
+      });
+    });
+
+    function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+  </script>
+{% endblock %}
+
