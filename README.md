@@ -7,7 +7,7 @@ Still under development.
 
 You are welcome to contribute.
 
-# Using the app
+# Installing the app
 
 1. To use this project, clone the repository.
 2. Copy the payment app into your django project.
@@ -60,6 +60,27 @@ You are welcome to contribute.
   ```
 6. Run python manage.py test payment to verify the app is working.
 
+# Using the project
+
+1. from payment.models import Subscription.
+  ```
+  from payment.models import Subscription
+  ```
+2. The Subscription model has a static method to create a subscription.
+  ```
+  # Static method that takes a user (auth.models.User),plan_name (name of plan as
+  # specified in braintree_plan_ids), a nonce (if customer is new),
+  # plan_id (if programmer knows plan_id)
+  @staticmethod
+  def create_subscription(user, plan_name, nonce = None, plan_id = None, commit = True, *args, **kwargs):
+  ```
+  The user arguement is of the type django.auth.models.User.
+  The plan_name is the name of the plan to subscribe the user to.
+  
+3. To check if a user has a particular subscription.
+  ```
+  user.has_perm(plan_name) # Returns True if the user is susbcribed to the plan.
+  ```
 
 If you have issues, raise them in the issues tab. 
 
